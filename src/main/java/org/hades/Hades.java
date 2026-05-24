@@ -4,60 +4,76 @@ import org.example.FilesService;
 import org.example.HttpClientService;
 import org.example.ParsingHtmlService;
 import org.jetbrains.annotations.NotNull;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Nodes;
-
 import java.io.IOException;
-import java.util.Objects;
 
 public class Hades {
 
-    String domain = "https://hades.fandom.com";
-    String urlDarBog = "https://hades.fandom.com/ru/wiki/%D0%94%D0%B0%D1%80_%D0%B1%D0%BE%D0%B3%D0%BE%D0%B2";
+    String domain = "https://hades.ruswiki.ru/";
+    String urlDarBog = "https://hades.ruswiki.ru/category/bogi/";
+    String selectorDarBog = ".freshwp-recent-post";
 
     String catalogHtmlHades = "E:\\CoreMain\\CoreMain\\src\\main\\resources\\hades\\";
+    String catalogHtmlHadesBogList = catalogHtmlHades + "bogList\\";
     String htmlNameFileHadesDarBog = "barBog.html";
+
 
     HttpClientService httpClientService = new HttpClientService();
     FilesService filesService = new FilesService();
     ParsingHtmlService parsingHtmlService = new ParsingHtmlService();
 
-    void main() throws IOException, InterruptedException {
-        // Получение html  с  списком богов
-        String html;
+    JSONArray bogListJson = new JSONArray();
 
-        if(filesService.checkFile(catalogHtmlHades + htmlNameFileHadesDarBog)) {
-            System.out.println("Чтения с файла");
-            html = filesService.getFileString(catalogHtmlHades + htmlNameFileHadesDarBog);
-        } else {
-            System.out.println("Взята с сайта");
-            html = httpClientService.getHttpResponseString(urlDarBog, "GET", null, null);
-            filesService.createFile(catalogHtmlHades, htmlNameFileHadesDarBog, html);
+    /**
+     * Получения html для парсинга с файловой системы или с сайта
+     * @param path путь к файлу
+     * @param fileName имя файла
+     * @param url url к сайту html для парсинга
+     * @return Возвращает html для парсинга
+     */
+    public String getHtml(String path, String fileName, String url) throws IOException, InterruptedException {
+        String fullPath = path + fileName;
+        if(filesService.checkFile(fullPath)) {
+            System.out.println("Чтения с файла " + fullPath);
+            return filesService.getFileString(fullPath);
+        }else {
+            System.out.println("Взята с сайта " + url);
+            String html = httpClientService.getHttpResponseString(url, "GET", null, null);
+            filesService.createFile(path, fileName, html);
+            return html;
         }
-        parsingHtmlDarBogName(html);
     }
 
-    public void parsingHtmlDarBogName(String html) {
+    public static void main(String[] args) throws IOException, InterruptedException {
+        Hades hades = new Hades();
+        String html = hades.getHtml(hades.catalogHtmlHades, hades.htmlNameFileHadesDarBog, hades.urlDarBog);
+        hades.parsingHtmlDarBogName(html);
+    }
+
+    public void parsingHtmlDarBogName(String html)  {
         Document document = parsingHtmlService.getDocument(html, domain);
-        Nodes<@NotNull Element> itemBog = parsingHtmlService.getElements(document, "span[typeof='mw:File']");
+        Nodes<@NotNull Element> itemBog = parsingHtmlService.getElements(document, selectorDarBog);
+        final int[] index = { 0 };
         itemBog.forEach(element -> {
-            Element link = element.nextElementSibling();
-            assert link != null;
+            index[0] = index[0] + 1;
+            Element link = parsingHtmlService.getElement(element, ".freshwp-recent-post-title a");
             String urlBog = parsingHtmlService.getAttr(link, "href");
-
-            Element imageElement = parsingHtmlService.getElement(element, "img.mw-file-element");
-            String imageUrl = parsingHtmlService.getAttr(imageElement, "src");
-            if(Objects.equals(imageUrl, "data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D")){
-                imageUrl = parsingHtmlService.getAttr(imageElement, "data-src");
+            String name = parsingHtmlService.getText(link);
+            JSONObject bogItem = new JSONObject();
+            bogItem.put("name", name);
+            bogItem.put("id", index[0]);
+            bogListJson.put(bogItem);
+            try {
+                String htmlBogWindow = getHtml(catalogHtmlHadesBogList, name + ".html", urlBog);
+            } catch (IOException | InterruptedException e) {
+                throw new RuntimeException(e);
             }
-
-            String name = parsingHtmlService.getText(Objects.requireNonNull(link));
-
-            System.out.println("--------------------------");
-            System.out.println(domain + urlBog);
-            System.out.println(imageUrl);
-            System.out.println(name);
         });
+
+        System.out.println(bogListJson.toString());
     }
 }
