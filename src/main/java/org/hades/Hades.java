@@ -2,6 +2,7 @@ package org.hades;
 
 import org.example.HttpClientService;
 import org.example.ParsingHtmlService;
+import org.jetbrains.annotations.NotNull;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Nodes;
@@ -19,7 +20,7 @@ public class Hades {
 //        Парсинг html
         ParsingHtmlService parsingHtmlService = new ParsingHtmlService();
         Document document = parsingHtmlService.getDocument(html, "https://hades.fandom.com");
-        Nodes<Element> itemBog = parsingHtmlService.getElements(document, "span[typeof='mw:File']");
+        Nodes<@NotNull Element> itemBog = parsingHtmlService.getElements(document, "span[typeof='mw:File']");
         itemBog.forEach(element -> {
             String urlBog = parsingHtmlService.getAttr(
                     parsingHtmlService.getElement(element, "a.mw-file-description.image"),
