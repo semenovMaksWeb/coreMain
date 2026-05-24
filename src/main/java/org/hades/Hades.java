@@ -23,7 +23,7 @@ public class Hades {
     FilesService filesService = new FilesService();
     ParsingHtmlService parsingHtmlService = new ParsingHtmlService();
 
-    void main(String[] args) throws IOException, InterruptedException {
+    void main() throws IOException, InterruptedException {
         // Получение html  с  списком богов
         String html;
 
