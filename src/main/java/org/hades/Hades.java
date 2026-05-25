@@ -69,11 +69,25 @@ public class Hades {
             bogListJson.put(bogItem);
             try {
                 String htmlBogWindow = getHtml(catalogHtmlHadesBogList, name + ".html", urlBog);
+                parsingHtmlDarBogItems(htmlBogWindow, urlBog);
             } catch (IOException | InterruptedException e) {
                 throw new RuntimeException(e);
             }
         });
 
         System.out.println(bogListJson.toString());
+    }
+
+    public void parsingHtmlDarBogItems(String html, String url){
+        Document document = parsingHtmlService.getDocument(html, url);
+        Nodes<@NotNull Element> listRowsDar = document.select(".wp-block-table tbody tr");
+        listRowsDar.forEach(element -> {
+            String nameDar = parsingHtmlService.getElement(element, "td").text();
+            String descriptionDar = element.select("td").get(2).text();
+            String requirementDar = element.select("td").get(4).text();
+            System.out.println(nameDar);
+            System.out.println(descriptionDar);
+            System.out.println(requirementDar);
+        });
     }
 }
