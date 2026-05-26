@@ -84,10 +84,15 @@ public class Hades {
         listRowsDar.forEach(element -> {
             String nameDar = parsingHtmlService.getElement(element, "td").text();
             String descriptionDar = element.select("td").get(2).text();
-            String requirementDar = element.select("td").get(4).text();
-            System.out.println(nameDar);
-            System.out.println(descriptionDar);
-            System.out.println(requirementDar);
+            int sizeElement = element.select("td").size();
+            String requirementDar = null;
+            if(sizeElement >= 5) {
+                requirementDar = element.select("td").get(4).text();
+            }
+
+            System.out.println("nameDar " + nameDar);
+            System.out.println("descriptionDar " + descriptionDar);
+            System.out.println("requirementDar " + requirementDar);
         });
     }
 }
